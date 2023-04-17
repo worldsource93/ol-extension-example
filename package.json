@@ -1,0 +1,22 @@
+{
+  "name": "ol-extension",
+  "version": "1.0.0",
+  "main": "layerswitcher.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel layerswitcher.html",
+    "build": "parcel build --public-url . layerswitcher.html"
+  },
+  "keywords": [],
+  "author": "SEOSEWON",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ol": "^7.3.0",
+    "ol-contextmenu": "^5.2.1",
+    "ol-layerswitcher": "^4.1.1"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.5"
+  }
+}
