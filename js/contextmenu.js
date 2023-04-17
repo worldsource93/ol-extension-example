@@ -1,144 +1,142 @@
-import { Map, View } from "ol";
-import { Tile as TileLayer, Vector as VectorLayer, Group as LayerGroup } from "ol/layer";
-import { Attribution, defaults as defaultControls } from 'ol/control';
-import { defaults as defaultInteractions, Draw, Select as OLSelect } from 'ol/interaction';
-import { Vector as VectorSource, XYZ, TileWMS, OSM } from 'ol/source'
+import { Feature, Map, View } from "ol";
+import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
+import { Vector as VectorSource, OSM } from 'ol/source'
 import * as olProj from 'ol/proj';
-import GeoJSON from 'ol/format/GeoJSON';
-import LayerSwitcher from "ol-layerswitcher";
 import ContextMenu from "ol-contextmenu";
-const GEOSERVER_URL = 'http://localhost:8080/geoserver/wms';
+import Style from "ol/style/Style";
+import Icon from "ol/style/Icon";
+import * as olCoordinate from 'ol/coordinate';
+import Fill from "ol/style/Fill";
+import Stroke from "ol/style/Stroke";
+import Text from "ol/style/Text";
+import { Point } from "ol/geom";
 
-const baseMaps = [
+const baseMap =
   new TileLayer({
-    title: 'OSM',
-    type: 'base',
     source: new OSM()
-  }),
-  new TileLayer({
-    title: 'vworld gray', type: 'base',
-    source: new XYZ({
-      url: 'https://xdworld.vworld.kr/2d/gray/service/{z}/{x}/{y}.png',
-      attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
-    }),
-  }),
-  new TileLayer({
-    title: 'vworld base', type: 'base',
-    source: new XYZ({
-      url: 'https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png',
-      attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
-    })
-  }),
-  new TileLayer({
-    title: 'vworld satellite', type: 'base',
-    source: new XYZ({
-      url: 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg',
-      attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
-    })
-  }),
-  new TileLayer({
-    title: 'vworld midnight', type: 'base',
-    source: new XYZ({
-      url: 'http://xdworld.vworld.kr:8080/2d/midnight/service/{z}/{x}/{y}.png',
-      attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
-    })
-  }),
-];
+  });
 
-const layers = [
-  new TileLayer({
-    title: 'stores',
-    source: new TileWMS({
-      url: GEOSERVER_URL,
-      params: {
-        VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'true', tiled: 'true',
-        LAYERS: 'seoul:stores'
-      }
-    })
-  }),
-  new TileLayer({
-    title: 'admin_emd',
-    source: new TileWMS({
-      url: GEOSERVER_URL,
-      params: {
-        VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'true', tiled: 'true',
-        LAYERS: 'seoul:admin_emd'
-      }
-    })
-  }),
-  new TileLayer({
-    title: 'admin_sgg',
-    source: new TileWMS({
-      url: GEOSERVER_URL,
-      params: {
-        VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'true', tiled: 'true',
-        LAYERS: 'seoul:admin_sgg'
-      }
-    })
-  }),
-  new TileLayer({
-    title: 'admin_sid',
-    source: new TileWMS({
-      url: GEOSERVER_URL,
-      params: {
-        VERSION: '1.3.0', FORMAT: 'image/png', TRANSPARENT: 'true', tiled: 'true',
-        LAYERS: 'seoul:admin_sid'
-      }
-    })
-  }),
-];
+const vectorLayer = new VectorLayer({
+  source: new VectorSource()
+});
 
 const mapView = new View({
-  center: olProj.transform([127, 37], 'EPSG:4326', 'EPSG:3857'),
+  center: olProj.transform([0, 0], 'EPSG:4326', 'EPSG:3857'),
   projection: 'EPSG:3857',
-  zoom: 7
+  zoom: 3
 });
 
 const map = new Map({
   target: 'map',
   view: mapView,
-  layers: [
-    new LayerGroup({
-      title: 'Base maps',
-      layers: baseMaps
-    }),
-    new LayerGroup({
-      title: 'Overlays',
-      layers: layers
-    }),
-  ],
-  controls: defaultControls({ attribution: false }).extend([
-    new Attribution({ collapsible: false })
-  ]),
-  interactions: defaultInteractions().extend([])
+  layers: [baseMap, vectorLayer]
 });
 
-const layerSwitcher = new LayerSwitcher({
-  reverse: false,
-  groupSelectStyle: 'group'
-});
+const pinIcon = 'https://cdn.jsdelivr.net/gh/jonataswalker/ol-contextmenu@604befc46d737d814505b5d90fc171932f747043/examples/img/pin_drop.png';
+const centerIcon = 'https://cdn.jsdelivr.net/gh/jonataswalker/ol-contextmenu@604befc46d737d814505b5d90fc171932f747043/examples/img/center.png';
+const listIcon = 'https://cdn.jsdelivr.net/gh/jonataswalker/ol-contextmenu@604befc46d737d814505b5d90fc171932f747043/examples/img/view_list.png';
 
-map.addControl(layerSwitcher);
-
-const contextmenu = new ContextMenu({
-  width: 170,
-    defaultItems: true, // defaultItems are (for now) Zoom In/Zoom Out
+const contextmenuItems = [
+  {
+    text: 'Center map here',
+    classname: 'bold',
+    icon: centerIcon,
+    callback: center
+  },
+  {
+    text: 'Some Actions',
+    icon: listIcon,
     items: [
       {
         text: 'Center map here',
-        callback: e => {
-
-        } 
+        icon: centerIcon,
+        callback: center
       },
       {
         text: 'Add a Marker',
-        callback: e => {
-
-
-        }
-      },
-      '-' // this is a separator
+        icon: pinIcon,
+        callback: marker
+      }
     ]
+  },
+  {
+    text: 'Add a Marker',
+    icon: pinIcon,
+    callback: marker
+  },
+  '-' // this is a separator
+];
+
+const contextmenu = new ContextMenu({
+  width: 180,
+  items: contextmenuItems
+});
+map.addControl(contextmenu);
+
+const removeMarkerItem = {
+  text: 'Remove this Marker',
+  classname: 'marker',
+  callback: removeMarker
+};
+
+contextmenu.on('open', function (evt) {
+  const feature =	map.forEachFeatureAtPixel(evt.pixel, ft => ft);
+  
+  if (feature && feature.get('type') === 'removable') {
+    contextmenu.clear();
+    removeMarkerItem.data = { marker: feature };
+    contextmenu.push(removeMarkerItem);
+  } else {
+    contextmenu.clear();
+    contextmenu.extend(contextmenuItems);
+    contextmenu.extend(contextmenu.getDefaultItems());
+  }
 });
 
-map.addControl(contextmenu);
+map.on('pointermove', function (e) {
+  if (e.dragging) return;
+
+  const pixel = map.getEventPixel(e.originalEvent);
+  const hit = map.hasFeatureAtPixel(pixel);
+
+  map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+});
+
+// from https://github.com/DmitryBaranovskiy/raphael
+function elastic(t) {
+  return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
+}
+
+function center(obj) {
+  mapView.animate({
+    duration: 700,
+    easing: elastic,
+    center: obj.coordinate
+  });
+}
+
+function removeMarker(obj) {
+  vectorLayer.getSource().removeFeature(obj.data.marker);
+}
+
+function marker(obj) {
+  const coord4326 = olProj.transform(obj.coordinate, 'EPSG:3857', 'EPSG:4326');
+  const template = 'Coordinate is ({x} | {y})';
+  const iconStyle = new Style({
+    image: new Icon({ scale: .6, src: pinIcon }),
+    text: new Text({
+      offsetY: 25,
+      text: olCoordinate.format(coord4326, template, 2),
+      font: '15px Open Sans,sans-serif',
+      fill: new Fill({ color: '#111' }),
+      stroke: new Stroke({ color: '#eee', width: 2 })
+    })
+  });
+  const feature = new Feature({
+    type: 'removable',
+    geometry: new Point(obj.coordinate)
+  });
+
+  feature.setStyle(iconStyle);
+  vectorLayer.getSource().addFeature(feature);
+}

@@ -1,26 +1,17 @@
 import { Map, View } from "ol";
-import { Tile as TileLayer, Vector as VectorLayer, Group as LayerGroup } from "ol/layer";
-import { Attribution, defaults as defaultControls } from 'ol/control';
-import { defaults as defaultInteractions, Draw, Select as OLSelect } from 'ol/interaction';
-import { Vector as VectorSource, XYZ, TileWMS } from 'ol/source'
+import { Tile as TileLayer, Group as LayerGroup } from "ol/layer";
+import { XYZ, TileWMS, OSM } from 'ol/source'
 import * as olProj from 'ol/proj';
-import GeoJSON from 'ol/format/GeoJSON';
 import LayerSwitcher from "ol-layerswitcher";
+
 const GEOSERVER_URL = 'http://localhost:8080/geoserver/wms';
 
 const baseMaps = [
   new TileLayer({
-    title: 'vworld gray', type: 'base',
-    source: new XYZ({
-      url: 'https://xdworld.vworld.kr/2d/gray/service/{z}/{x}/{y}.png',
-      attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
-    }),
-  }),
-  new TileLayer({
-    title: 'vworld base', type: 'base',
+    title: 'vworld midnight', type: 'base',
     visible: false,
     source: new XYZ({
-      url: 'https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png',
+      url: 'http://xdworld.vworld.kr:8080/2d/midnight/service/{z}/{x}/{y}.png',
       attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
     })
   }),
@@ -33,12 +24,23 @@ const baseMaps = [
     })
   }),
   new TileLayer({
-    title: 'vworld midnight', type: 'base',
+    title: 'vworld base', type: 'base',
     visible: false,
     source: new XYZ({
-      url: 'http://xdworld.vworld.kr:8080/2d/midnight/service/{z}/{x}/{y}.png',
+      url: 'https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png',
       attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
     })
+  }),
+  new TileLayer({
+    title: 'vworld gray', type: 'base',
+    source: new XYZ({
+      url: 'https://xdworld.vworld.kr/2d/gray/service/{z}/{x}/{y}.png',
+      attributions: '공간정보오픈플랫폼 VWORLD 2019 | 국토교통부',
+    }),
+  }),
+  new TileLayer({
+    title: 'OSM', type: 'base',
+    source: new OSM()
   })
 ];
 
@@ -102,12 +104,8 @@ const map = new Map({
     new LayerGroup({
       title: 'Overlays',
       layers: layers
-    }),
-  ],
-  controls: defaultControls({ attribution: false }).extend([
-    new Attribution({ collapsible: false })
-  ]),
-  interactions: defaultInteractions().extend([])
+    })
+  ]
 });
 
 const layerSwitcher = new LayerSwitcher({
